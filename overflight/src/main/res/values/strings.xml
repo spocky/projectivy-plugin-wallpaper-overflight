@@ -1,7 +1,7 @@
 <resources>
     <string name="plugin_name">Projectivy Wallpaper : Overflight</string>
     <string name="plugin_short_name">Overflight</string>
-    <string name="plugin_description">Displays videos from Apple TV\'s Aerial screensaver or any other image/video referenced in the media source</string>
+    <string name="plugin_description">Displays videos from Apple TV™\'s Aerial screensaver or any other image/video referenced in the media source</string>
 
     <string name="projectivy_not_installed">Warning, this plugin requires Projectivy Launcher which does not seem to be installed.</string>
 

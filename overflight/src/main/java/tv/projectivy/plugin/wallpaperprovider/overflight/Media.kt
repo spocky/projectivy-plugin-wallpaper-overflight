@@ -1,11 +1,13 @@
 package tv.projectivy.plugin.wallpaperprovider.overflight
 
+import kotlinx.serialization.Serializable
 import tv.projectivy.plugin.wallpaperprovider.api.WallpaperType
 import tv.projectivy.plugin.wallpaperprovider.overflight.PreferencesManager.fallback
 import tv.projectivy.plugin.wallpaperprovider.overflight.PreferencesManager.video_4k
 import tv.projectivy.plugin.wallpaperprovider.overflight.PreferencesManager.video_hdr
 
-// Default values are defined so that Gson can parse the JSON with missing fields
+// Default values keep parsing resilient when some JSON fields are missing.
+@Serializable
 data class Media(val location: String="",
                  val title: String="",
                  val url_img: String="",

@@ -2,32 +2,33 @@ import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    id("com.android.application")
-    id("org.jetbrains.kotlin.android")
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.serialization)
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_17)
+    }
 }
 
 android {
-    namespace = "tv.projectivy.plugin.wallpaperprovider.overflight"
-    compileSdk = 36
-
-    defaultConfig {
-        applicationId = "tv.projectivy.plugin.wallpaperprovider.overflight"
-        minSdk = 24
-        targetSdk = 36
-        versionCode = 5
-        versionName = "1.12"
-
-        base.archivesName =  "ProjectivyPlugin-Overflight-$versionName-c$versionCode"
-    }
+    namespace = libs.versions.appId.get()
+    compileSdk = libs.versions.compileSdk.get().toInt()
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlin {
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_17)
-        }
+
+    defaultConfig {
+        applicationId = libs.versions.appId.get()
+        minSdk = libs.versions.minSdk.get().toInt()
+        targetSdk = libs.versions.targetSdk.get().toInt()
+        versionCode = libs.versions.versionCode.get().toInt()
+        versionName = libs.versions.versionName.get()
+
+        base.archivesName =  "ProjectivyPlugin-Overflight-$versionName-c$versionCode"
     }
 
     signingConfigs {
@@ -45,6 +46,10 @@ android {
         }
     }
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     flavorDimensions.add("store")
     productFlavors {
         create("playstore") {
@@ -54,19 +59,19 @@ android {
             dimension = "store"
         }
     }
+    productFlavors.configureEach {
+        signingConfig = if (name.contains("playstore")) {
+            signingConfigs.getByName("playstoreRelease")
+        } else {
+            signingConfigs.getByName("genericRelease")
+        }
+    }
 
     buildTypes {
-        debug {
+        getByName("debug") {
             versionNameSuffix = "-dev"
         }
-        release {
-            productFlavors.forEach { flavor ->
-                if (flavor.name.contains("playstore")) {
-                    flavor.signingConfig = signingConfigs.getByName("playstoreRelease")
-                } else  {
-                    flavor.signingConfig = signingConfigs.getByName("genericRelease")
-                }
-            }
+        getByName("release") {
             isShrinkResources = true
             isMinifyEnabled = true
             isDebuggable = false
@@ -74,25 +79,20 @@ android {
         }
     }
 
-    buildFeatures {
-        buildConfig = true
-    }
 }
 
 dependencies {
-    implementation("androidx.core:core-ktx:1.17.0")
-    implementation("androidx.leanback:leanback:1.2.0")
-    implementation("androidx.appcompat:appcompat:1.7.1")
-    implementation("com.google.android.material:material:1.12.0")
-    implementation("androidx.preference:preference-ktx:1.2.1")
+    implementation(libs.androidx.core)
+    implementation(libs.androidx.leanback)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.google.material)
+    implementation(libs.androidx.preference.ktx)
+    implementation(libs.kotlinx.serialization.json)
 
-    implementation("com.google.code.gson:gson:2.13.1")
+    implementation(platform(libs.okhttp.bom))
+    implementation(libs.okhttp)
 
-    implementation(platform("com.squareup.okhttp3:okhttp-bom:5.1.0"))
-    implementation("com.squareup.okhttp3:okhttp")
-
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
+    implementation(libs.bundles.kotlinx.coroutines)
 
     implementation(project(":api"))
 }

@@ -41,9 +41,7 @@ sealed class Event(open val eventType: Int) : Parcelable {
             }
         }
 
-        override fun newArray(size: Int): Array<Event?> {
-            return arrayOfNulls(size)
-        }
+        override fun newArray(size: Int) = arrayOfNulls<Event?>(size)
 
         private fun <T> createEventFromParcel(parcel: Parcel, clazz: Class<T>): T {
             val creatorField = clazz.getField("CREATOR")

@@ -19,6 +19,3 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
--keepclassmembers class tv.projectivy.plugin.wallpaperprovider.api.Wallpaper { !static !transient <fields>; }
--keep class tv.projectivy.plugin.wallpaperprovider.overflight.Media
--keepclassmembers class tv.projectivy.plugin.wallpaperprovider.overflight.Media { !static !transient <fields>; }

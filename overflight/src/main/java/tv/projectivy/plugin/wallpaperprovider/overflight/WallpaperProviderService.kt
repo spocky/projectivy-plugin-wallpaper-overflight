@@ -4,21 +4,24 @@ import android.app.Service
 import android.content.Intent
 import android.os.IBinder
 import android.util.Log
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.Json
 import tv.projectivy.plugin.wallpaperprovider.api.Event
 import tv.projectivy.plugin.wallpaperprovider.api.IWallpaperProviderService
 import tv.projectivy.plugin.wallpaperprovider.api.Wallpaper
 import tv.projectivy.plugin.wallpaperprovider.api.WallpaperDisplayMode
-import java.lang.reflect.Type
 
 class WallpaperProviderService: Service() {
 
-    val gson by lazy { Gson() }
-    val mediaListType: Type = object : TypeToken<List<Media?>>() {}.type
+    private val json by lazy {
+        Json {
+            ignoreUnknownKeys = true
+            isLenient = true
+            allowTrailingComma = true
+        }
+    }
 
     override fun onCreate() {
         super.onCreate()
@@ -64,20 +67,29 @@ class WallpaperProviderService: Service() {
     suspend fun parseJson(jsonString: String?): List<Wallpaper> {
         return withContext(Dispatchers.Default) {
             try {
+                if (jsonString.isNullOrBlank()) {
+                    return@withContext emptyList()
+                }
+
                 // Parse the JSON into a list of Media objects
-                gson.fromJson<List<Media?>?>(jsonString, mediaListType)
-                    ?.let { mediaList ->
+                json.decodeFromString<List<Media?>?>(jsonString)
+                    ?.let { medialist ->
                         // Filter out any null objects (ex: due to trailing commas in JSON)
-                        mediaList.filterNotNull()
-                        // Convert the list of Media objects into a list of Wallpaper objects
-                        .map { media ->
-                            Wallpaper(media.preferredMediaUri, media.mediaType,
-                               WallpaperDisplayMode.DEFAULT, media.title, media.location, media.author)
-                        }
-                        // Filter out any wallpapers with an empty URI
-                        .filter { it.uri.isNotBlank() }
-                    }
-                    ?: emptyList()
+                        medialist.filterNotNull()
+                            // Convert the list of Media objects into a list of Wallpaper objects
+                            .map { media ->
+                                Wallpaper(
+                                    media.preferredMediaUri,
+                                    media.mediaType,
+                                    WallpaperDisplayMode.DEFAULT,
+                                    media.title,
+                                    media.location,
+                                    media.author
+                                )
+                            }
+                            // Filter out any wallpapers with an empty URI
+                            .filter { it.uri.isNotBlank() }
+                    } ?: emptyList()
             } catch (e: Exception) {
                 Log.e("JSON Parsing", "Error parsing JSON: $e")
                 emptyList()
