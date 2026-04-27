@@ -12,6 +12,7 @@ import tv.projectivy.plugin.wallpaperprovider.api.Event
 import tv.projectivy.plugin.wallpaperprovider.api.IWallpaperProviderService
 import tv.projectivy.plugin.wallpaperprovider.api.Wallpaper
 import tv.projectivy.plugin.wallpaperprovider.api.WallpaperDisplayMode
+import tv.projectivy.plugin.wallpaperprovider.api.WallpaperType
 
 class WallpaperProviderService: Service() {
 
@@ -54,46 +55,112 @@ class WallpaperProviderService: Service() {
     }
 
     suspend fun fetchWallpapers(): List<Wallpaper> {
-        val jsonString = loadJson(PreferencesManager.mediaSourceUrl)
-        return parseJson(jsonString)
+        val mediaSourceString = loadMediaSource(PreferencesManager.mediaSourceUrl)
+        return parseMediaSource(mediaSourceString?.trim())
     }
 
-    suspend fun loadJson(url: String): String? {
+    suspend fun loadMediaSource(url: String): String? {
         return withContext(Dispatchers.IO) {
             NetClientManager.request(url)
         }
     }
 
-    suspend fun parseJson(jsonString: String?): List<Wallpaper> {
+    suspend fun parseMediaSource(mediasourceString: String?): List<Wallpaper> {
+        return when {
+            mediasourceString.isNullOrBlank() -> emptyList()
+            // If the media source string starts with a "[" character, we will consider it as a JSON string
+            mediasourceString.startsWith("[") -> parseJson(mediasourceString)
+            // If the media source string starts with a "#" character, we will consider it as an M3U string
+            mediasourceString.startsWith("#") -> parseM3U(mediasourceString)
+            else -> emptyList()
+        }
+    }
+
+    suspend fun parseM3U(m3uString: String): List<Wallpaper> {
         return withContext(Dispatchers.Default) {
             try {
-                if (jsonString.isNullOrBlank()) {
-                    return@withContext emptyList()
-                }
+                val wallpapers = mutableListOf<Wallpaper>()
+                var currentTitle: String? = null
+                var currentSource: String? = null
+                val groupTitleRegex = Regex("group-title=\"([^\"]+)\"")
+                val videoRegex = Regex("\\.(mp4|mkv|webm|mov|m4v|3gp|ts|m3u8)(\\?.*)?$", RegexOption.IGNORE_CASE)
 
+                m3uString.lineSequence().forEach { line ->
+                    if (wallpapers.size >= MAX_WALLPAPERS_COUNT) return@withContext wallpapers
+
+                    val trimmedLine = line.trim()
+                    if (trimmedLine.isEmpty()) return@forEach
+
+                    if (trimmedLine.startsWith("#EXTINF:")) {
+                        // Extract title: it's everything after the last comma
+                        val commaIndex = trimmedLine.lastIndexOf(',')
+                        if (commaIndex != -1) {
+                            currentTitle = trimmedLine.substring(commaIndex + 1).trim()
+                        }
+                        // Extract group-title as source if present
+                        val groupTitleMatch = groupTitleRegex.find(trimmedLine)
+                        currentSource = groupTitleMatch?.groupValues?.get(1)
+                    } else if (!trimmedLine.startsWith("#")) {
+                        // This should be the URI
+                        val type = if (line.contains(videoRegex)) {
+                            WallpaperType.VIDEO
+                        } else {
+                            WallpaperType.IMAGE
+                        }
+
+                        wallpapers.add(
+                            Wallpaper(
+                                uri = trimmedLine,
+                                type = type,
+                                displayMode = WallpaperDisplayMode.DEFAULT,
+                                title = currentTitle,
+                                source = currentSource,
+                                author = null
+                            )
+                        )
+                        // Reset for next entry
+                        currentTitle = null
+                        currentSource = null
+                    }
+                }
+                wallpapers
+            } catch (e: Exception) {
+                Log.e("M3U Parsing", "Error parsing M3U: $e")
+                emptyList()
+            }
+        }
+    }
+
+    suspend fun parseJson(jsonString: String): List<Wallpaper> {
+        return withContext(Dispatchers.Default) {
+            try {
                 // Parse the JSON into a list of Media objects
                 json.decodeFromString<List<Media?>?>(jsonString)
-                    ?.let { medialist ->
-                        // Filter out any null objects (ex: due to trailing commas in JSON)
-                        medialist.filterNotNull()
-                            // Convert the list of Media objects into a list of Wallpaper objects
-                            .map { media ->
-                                Wallpaper(
-                                    media.preferredMediaUri,
-                                    media.mediaType,
-                                    WallpaperDisplayMode.DEFAULT,
-                                    media.title,
-                                    media.location,
-                                    media.author
-                                )
-                            }
-                            // Filter out any wallpapers with an empty URI
-                            .filter { it.uri.isNotBlank() }
-                    } ?: emptyList()
+                    ?.asSequence()
+                    ?.filterNotNull()
+                    // Convert the list of Media objects into a list of Wallpaper objects
+                    ?.map { media ->
+                        Wallpaper(
+                            media.preferredMediaUri,
+                            media.mediaType,
+                            WallpaperDisplayMode.DEFAULT,
+                            media.title,
+                            media.location,
+                            media.author
+                        )
+                    }
+                    // Filter out any wallpapers with an empty URI
+                    ?.filter { it.uri.isNotBlank() }
+                    ?.take(MAX_WALLPAPERS_COUNT)
+                    ?.toList() ?: emptyList()
             } catch (e: Exception) {
                 Log.e("JSON Parsing", "Error parsing JSON: $e")
                 emptyList()
             }
         }
+    }
+
+    companion object {
+        private const val MAX_WALLPAPERS_COUNT = 1000
     }
 }
