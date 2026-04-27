@@ -8,6 +8,8 @@ Supported formats : JSON, M3U
 
 Feel free to share your custom lists !
 
+Note: M3U support is available from Projectivy 4.70-beta02 onwards, make sure to update your launcher if you want to use it.
+
 # Usage
 - Install the plugin to an Android Tv device with Projectivy Launcher installed
 - Go to Projectivy settings > Appearance > Wallpaper and choose "Overflight" in the dropdown list
