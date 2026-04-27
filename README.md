@@ -3,7 +3,8 @@
 Provides Apple TV's Aerials screen savers as video wallpapers for Projectivy Launcher.
 Links source : https://docs.google.com/spreadsheets/d/1bboTohF06r-fafrImTExAPqM9m6h2m2lgJyAkQuYVJI
 
-But there's more to it ! You can also customize the url to the json that lists the media, which means you can use this plugin to provide Projectivy any video (or picture) list you want (trailers, live cams...).
+But there's more to it ! You can also customize the URL to the media source, which means you can use this plugin to provide Projectivy any video (or picture) list you want (trailers, live cams...).
+Supported formats : JSON, M3U
 
 Feel free to share your custom lists !
 
@@ -12,7 +13,7 @@ Feel free to share your custom lists !
 - Go to Projectivy settings > Appearance > Wallpaper and choose "Overflight" in the dropdown list
 
 # Screensaver
-This is not a screensaver but a wallpaper dedicated to Projectivy Launcher. For a total "Aerials" experience, don't forget to install [this full-featured "Aerials" screensaver](https://github.com/theothernt/AerialViews)
+This is not a screensaver but a wallpaper provider dedicated to Projectivy Launcher. For a total "Aerials" experience, don't forget to install [this full-featured "Aerials" screensaver](https://github.com/theothernt/AerialViews)
 
 # JSON format
 ```
