@@ -29,6 +29,9 @@ serializationJson = "1.11.0" # https://github.com/Kotlin/kotlinx.serialization/r
 # Leanback
 leanback = "1.2.0" # https://developer.android.com/jetpack/androidx/releases/leanback
 
+# Lifecycle
+lifecycle = "2.10.0" # https://developer.android.com/jetpack/androidx/releases/lifecycle
+
 # OkHttp
 okhttp = "5.3.2" # https://github.com/square/okhttp/blob/master/CHANGELOG.md
 
@@ -49,6 +52,9 @@ androidx-annotation = { group = "androidx.annotation", name = "annotation", vers
 
 # Material
 google-material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+
+# Lifecycle
+androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycle" }
 
 # OkHttp
 okhttp-bom = { group = "com.squareup.okhttp3", name = "okhttp-bom", version.ref = "okhttp" }
