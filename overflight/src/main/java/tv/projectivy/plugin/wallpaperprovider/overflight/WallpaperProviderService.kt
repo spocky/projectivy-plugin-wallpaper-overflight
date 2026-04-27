@@ -47,7 +47,7 @@ class WallpaperProviderService: Service() {
     }
 
     companion object {
-        private const val MAX_WALLPAPERS_COUNT = 1000
+        const val MAX_WALLPAPERS_COUNT = 1000
 
         private val json by lazy {
             Json {
@@ -59,7 +59,15 @@ class WallpaperProviderService: Service() {
 
         suspend fun fetchWallpapers(): List<Wallpaper> {
             val mediaSourceString = loadMediaSource(PreferencesManager.mediaSourceUrl)
-            return parseMediaSource(mediaSourceString?.trim())
+
+            val filter = PreferencesManager.filterKeywords
+            val keywords = if (filter.isBlank()) {
+                emptyList()
+            } else {
+                filter.split(Regex(",+")).filter { it.isNotBlank() }
+            }
+
+            return parseMediaSource(mediaSourceString?.trim(), keywords)
         }
 
         suspend fun loadMediaSource(url: String): String? {
@@ -68,18 +76,18 @@ class WallpaperProviderService: Service() {
             }
         }
 
-        suspend fun parseMediaSource(mediasourceString: String?): List<Wallpaper> {
+        suspend fun parseMediaSource(mediasourceString: String?, keywords: List<String>): List<Wallpaper> {
             return when {
                 mediasourceString.isNullOrBlank() -> emptyList()
                 // If the media source string starts with a "[" character, we will consider it as a JSON string
-                mediasourceString.startsWith("[") -> parseJson(mediasourceString)
+                mediasourceString.startsWith("[") -> parseJson(mediasourceString, keywords)
                 // If the media source string starts with a "#" character, we will consider it as an M3U string
-                mediasourceString.startsWith("#") -> parseM3U(mediasourceString)
+                mediasourceString.startsWith("#") -> parseM3U(mediasourceString, keywords)
                 else -> emptyList()
             }
         }
 
-        suspend fun parseM3U(m3uString: String): List<Wallpaper> {
+        suspend fun parseM3U(m3uString: String, keywords: List<String>): List<Wallpaper> {
             return withContext(Dispatchers.Default) {
                 try {
                     val wallpapers = mutableListOf<Wallpaper>()
@@ -111,16 +119,19 @@ class WallpaperProviderService: Service() {
                                 WallpaperType.IMAGE
                             }
 
-                            wallpapers.add(
-                                Wallpaper(
-                                    uri = trimmedLine,
-                                    type = type,
-                                    displayMode = WallpaperDisplayMode.DEFAULT,
-                                    title = currentTitle,
-                                    source = currentSource,
-                                    author = null
-                                )
+                            val wallpaper = Wallpaper(
+                                uri = trimmedLine,
+                                type = type,
+                                displayMode = WallpaperDisplayMode.DEFAULT,
+                                title = currentTitle,
+                                source = currentSource,
+                                author = null
                             )
+
+                            if (wallpaper.matches(keywords)) {
+                                wallpapers.add(wallpaper)
+                            }
+
                             // Reset for next entry
                             currentTitle = null
                             currentSource = null
@@ -134,7 +145,7 @@ class WallpaperProviderService: Service() {
             }
         }
 
-        suspend fun parseJson(jsonString: String): List<Wallpaper> {
+        suspend fun parseJson(jsonString: String, keywords: List<String>): List<Wallpaper> {
             return withContext(Dispatchers.Default) {
                 try {
                     // Parse the JSON into a list of Media objects
@@ -154,12 +165,21 @@ class WallpaperProviderService: Service() {
                         }
                         // Filter out any wallpapers with an empty URI
                         ?.filter { it.uri.isNotBlank() }
+                        ?.filter { it.matches(keywords) }
                         ?.take(MAX_WALLPAPERS_COUNT)
                         ?.toList() ?: emptyList()
                 } catch (e: Exception) {
                     Log.e("JSON Parsing", "Error parsing JSON: $e")
                     emptyList()
                 }
+            }
+        }
+
+        private fun Wallpaper.matches(keywords: List<String>): Boolean {
+            if (keywords.isEmpty()) return true
+            return keywords.any { keyword ->
+                title?.contains(keyword, ignoreCase = true) == true ||
+                        source?.contains(keyword, ignoreCase = true) == true
             }
         }
     }

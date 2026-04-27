@@ -8,6 +8,7 @@ import androidx.leanback.widget.GuidanceStylist.Guidance
 import androidx.leanback.widget.GuidedAction
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
+import tv.projectivy.plugin.wallpaperprovider.overflight.WallpaperProviderService.Companion.MAX_WALLPAPERS_COUNT
 
 class SettingsFragment : GuidedStepSupportFragment() {
     override fun onCreateGuidance(savedInstanceState: Bundle?): Guidance {
@@ -66,6 +67,16 @@ class SettingsFragment : GuidedStepSupportFragment() {
             .build()
             .also { actions.add(it) }
 
+        val currentFilterKeywords = PreferencesManager.filterKeywords
+        GuidedAction.Builder(context)
+            .id(ACTION_ID_FILTER_KEYWORDS)
+            .title(getString(R.string.setting_filter_keywords))
+            .description(currentFilterKeywords)
+            .editDescription(currentFilterKeywords)
+            .descriptionEditable(true)
+            .build()
+            .also { actions.add(it) }
+
         GuidedAction.Builder(context)
             .id(ACTION_ID_WALLPAPER_COUNT)
             .title(getString(R.string.setting_wallpaper_count))
@@ -107,6 +118,13 @@ class SettingsFragment : GuidedStepSupportFragment() {
                 findActionById(ACTION_ID_CACHE_DURATION)?.description = PreferencesManager.cacheDurationHours.toString()
                 notifyActionChanged(findActionPositionById(ACTION_ID_CACHE_DURATION))
             }
+            ACTION_ID_FILTER_KEYWORDS -> {
+                val params: CharSequence? = action.editDescription
+                PreferencesManager.filterKeywords = params?.toString() ?: ""
+                findActionById(ACTION_ID_FILTER_KEYWORDS)?.description = PreferencesManager.filterKeywords
+                notifyActionChanged(findActionPositionById(ACTION_ID_FILTER_KEYWORDS))
+                updateWallpaperCount()
+            }
         }
     }
 
@@ -118,6 +136,11 @@ class SettingsFragment : GuidedStepSupportFragment() {
 
             val wallpapers = WallpaperProviderService.fetchWallpapers()
             countAction.description = wallpapers.size.toString()
+            countAction.description = if (wallpapers.size==MAX_WALLPAPERS_COUNT) {
+                "${wallpapers.size}+"
+            } else {
+                wallpapers.size.toString()
+            }
             notifyActionChanged(findActionPositionById(ACTION_ID_WALLPAPER_COUNT))
         }
     }
@@ -128,6 +151,7 @@ class SettingsFragment : GuidedStepSupportFragment() {
         private const val ACTION_ID_FALLBACK= 3L
         private const val ACTION_ID_MEDIA_SOURCE_URL= 4L
         private const val ACTION_ID_CACHE_DURATION = 5L
-        private const val ACTION_ID_WALLPAPER_COUNT = 6L
+        private const val ACTION_ID_FILTER_KEYWORDS = 6L
+        private const val ACTION_ID_WALLPAPER_COUNT = 7L
     }
 }

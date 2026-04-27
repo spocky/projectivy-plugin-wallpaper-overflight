@@ -90,6 +90,10 @@ object PreferencesManager {
         get() = PreferencesManager["cache-duration-hours", DEFAULT_CACHE_DURATION_HOURS].takeIf { it>= 0 } ?: DEFAULT_CACHE_DURATION_HOURS
         set(value) { PreferencesManager["cache-duration-hours"]=value }
 
+    var filterKeywords: String
+        get() = PreferencesManager["filter-keywords", ""]
+        set(value) { PreferencesManager["filter-keywords"]=value }
+
     fun export(): String {
         return convertSharedPreferencesToJson(preferences)
     }
