@@ -49,13 +49,12 @@ class WallpaperProviderService: Service() {
     companion object {
         const val MAX_WALLPAPERS_COUNT = 1000
 
-        private val json by lazy {
-            Json {
+        private val json: Json
+            get() = Json {
                 ignoreUnknownKeys = true
                 isLenient = true
                 allowTrailingComma = true
             }
-        }
 
         suspend fun fetchWallpapers(): List<Wallpaper> {
             val mediaSourceString = loadMediaSource(PreferencesManager.mediaSourceUrl)
