@@ -34,6 +34,11 @@ This is not a screensaver but a wallpaper provider dedicated to Projectivy Launc
 ```
 None of the fields are mandatory but you will need to set at least one url_* so that a wallpaper is loaded.
 
+# Community lists
+- [Dark space photos](https://gist.github.com/NoZiL/840266858a4aa70dbea952d9a9e3e6b4):
+  20 ESA/Webb and ESA/Hubble photos with mostly black backgrounds (images only, ~4000 px).
+  Media source URL: `https://gist.githubusercontent.com/NoZiL/840266858a4aa70dbea952d9a9e3e6b4/raw/wallpapers.json`
+
 # Note
 This plugin is provided as is, and is not affiliated with Aerials or Apple Inc.
 If you're a developer and want to create your own wallpaper plugin, check [the sample project](https://github.com/spocky/projectivy-plugin-wallpaper-provider) or use this repository as a base.
